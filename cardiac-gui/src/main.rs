@@ -1,3 +1,6 @@
+use cardiac_core::Assembler;
+
 fn main() {
-    println!("Hello, world!");
+    let assembler: Assembler = Assembler::new();
+    assembler.inp(10);
 }
