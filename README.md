@@ -9,3 +9,8 @@ cargo build
 ```bash
 cargo run cardiac-gui
 ```
+
+3. For create doc view
+```bash
+cargo doc --open
+```
