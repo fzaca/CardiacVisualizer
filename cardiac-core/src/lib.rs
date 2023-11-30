@@ -108,8 +108,11 @@ impl Assembler {
         self.memory[address] = last_three_digits;
     }
 
+    /// Subtract the contents of a specified memory cell from the accumulator.
     fn sub(&mut self, address: usize) {
-        println!("inp {address}")
+        let value: i32 = self.memory[address];
+        self.accumulator -= value;
+        self.flag = value >= 0;
     }
 
     /// Jump to a specified memory cell. 
