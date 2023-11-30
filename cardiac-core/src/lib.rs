@@ -13,6 +13,7 @@ pub struct Assembler {
     input_deck: Vec<i32>,
     output_deck: Vec<i32>,
     instruction_map: HashMap<u32, fn(&mut Self, usize)>,
+    run: bool,
 }
 
 impl Assembler {
@@ -43,6 +44,7 @@ impl Assembler {
             input_deck: Vec::new(),
             output_deck: Vec::new(),
             instruction_map: instruction_map,
+            run: true,
         }
     }
 
@@ -123,8 +125,14 @@ impl Assembler {
         self.target = address as u32;
     }
 
+    /// Move the program counter to the specified cell and stop program execution ("Halt and ReSet").
     fn hrs(&mut self, address: usize) {
-        println!("inp {address}")
+        self.target = address as u32;
+        self.run = false;
+    }
+
+    pub fn check_run(&self) -> bool {
+        self.run
     }
 
     pub fn reset(&mut self) {
@@ -134,6 +142,7 @@ impl Assembler {
         self.input_deck = Vec::new();
         self.output_deck = Vec::new();
         self.flag = true;
+        self.run = true;
     }
 
     pub fn clear_memory(&mut self) {
@@ -154,6 +163,8 @@ impl Assembler {
     }
 
     pub fn next_step(&mut self) {
+        self.run = true;
+
         let instruction: i32 = self.memory[self.target as usize];
 
         let opcode: u32 = (instruction / 100) as u32;
