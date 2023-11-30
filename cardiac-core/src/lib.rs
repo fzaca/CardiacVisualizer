@@ -84,12 +84,22 @@ impl Assembler {
         }
     }
 
+    /// Shifts the accumulator x places left, then y places right, where x is the upper address digit and y is the lower.
     fn sft(&mut self, address: usize) {
-        println!("inp {address}")
+        let upper_digit = address / 10;
+        let lower_digit = address % 10;
+    
+        // Shift left by x places
+        self.accumulator <<= upper_digit;
+    
+        // Scroll right by and places
+        self.accumulator >>= lower_digit;
     }
 
+    /// Take a number from the specified memory cell and write it on the output card.
     fn out(&mut self, address: usize) {
-        println!("inp {address}")
+        let value: i32 = self.memory[address];
+        self.output_deck.push(value);
     }
 
     fn sto(&mut self, address: usize) {
