@@ -63,12 +63,17 @@ impl Assembler {
         let value: i32 = self.memory[address];
         self.accumulator = value;
     
-        // Change flag if value is negative
+        // Check accumulator sign
         self.flag = value >= 0;
     }
 
+    /// Add the contents of a memory cell to the accumulator.
     fn add(&mut self, address: usize) {
-        println!("inp {address}")
+        let value: i32 = self.memory[address];
+        self.accumulator += value;
+
+        // Check accumulator sign
+        self.flag = value >= 0;
     }
 
     fn tac(&mut self, address: usize) {
@@ -133,7 +138,7 @@ impl Assembler {
         
         if let Some(instruction_fn) = self.instruction_map.get(&opcode) {
             instruction_fn(self, address as usize);
-            self.step = self.step + 1;
+            self.step += 1;
         } else {
             panic!("Opcode undefined: {}", opcode);
         }
