@@ -48,10 +48,6 @@ impl Assembler {
 
     /// Take a number from the input card ("INPut") and place it in the specified memory cell.
     fn inp(&mut self, address: usize) {
-        if address <= 99 {
-            panic!("Memory address out of range: {}", address);
-        }
-
         if let Some(value) = self.input_deck.pop() {
             if !(-999 <= value && value <= 999) {
                 panic!("Value in input card out of range: {}", value);
@@ -62,8 +58,13 @@ impl Assembler {
         }
     }
 
+    /// Clear the accumulator and add the contents of a memory cell to the accumulator.
     fn cla(&mut self, address: usize) {
-        println!("inp {address}")
+        let value: i32 = self.memory[address];
+        self.accumulator = value;
+    
+        // Change flag if value is negative
+        self.flag = value >= 0;
     }
 
     fn add(&mut self, address: usize) {
