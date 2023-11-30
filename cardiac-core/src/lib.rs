@@ -76,8 +76,12 @@ impl Assembler {
         self.flag = value >= 0;
     }
 
+    /// Performs a sign test on the contents of the accumulator.
+    /// if minus, jump to a specified memory cell.
     fn tac(&mut self, address: usize) {
-        println!("inp {address}")
+        if self.flag {
+            self.jmp(address);
+        }
     }
 
     fn sft(&mut self, address: usize) {
@@ -96,8 +100,12 @@ impl Assembler {
         println!("inp {address}")
     }
 
+    /// Jump to a specified memory cell. 
+    /// The current cell number is written in cell 99. 
+    /// This allows for one level of subroutines by having the return be the instruction at cell 99 (which had '8' hardcoded as the first digit.
     fn jmp(&mut self, address: usize) {
-        println!("inp {address}")
+        self.memory[99] = format!("8{:02}", self.target).parse().unwrap();
+        self.target = address as u32;
     }
 
     fn hrs(&mut self, address: usize) {
