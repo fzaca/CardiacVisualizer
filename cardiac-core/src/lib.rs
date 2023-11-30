@@ -102,8 +102,10 @@ impl Assembler {
         self.output_deck.push(value);
     }
 
+    /// Copy the contents of the accumulator into a specified memory cell.
     fn sto(&mut self, address: usize) {
-        println!("inp {address}")
+        let last_three_digits = self.accumulator % 1000;
+        self.memory[address] = last_three_digits;
     }
 
     fn sub(&mut self, address: usize) {
