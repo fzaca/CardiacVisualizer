@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 /// Emulator of the **CARDIAC** cardboard computer.  
 /// info in [wikipedia](wikipedia.org/wiki/CARDboard_Illustrative_Aid_to_Computation)
-/// 
+///
 /// Simulator for tests: [simulator](https://www.cs.drexel.edu/~bls96/museum/cardsim.html)
 pub struct Assembler {
     memory: [i32; 100],
@@ -21,15 +21,15 @@ impl Assembler {
     pub fn new() -> Self {
         let mut instruction_map: HashMap<u32, fn(&mut Self, usize)> = HashMap::new();
         instruction_map.insert(0, Self::inp);
-        instruction_map.insert(0, Self::cla);
-        instruction_map.insert(0, Self::add);
-        instruction_map.insert(0, Self::tac);
-        instruction_map.insert(0, Self::sft);
-        instruction_map.insert(0, Self::out);
-        instruction_map.insert(0, Self::sto);
-        instruction_map.insert(0, Self::sub);
-        instruction_map.insert(0, Self::jmp);
-        instruction_map.insert(0, Self::hrs);
+        instruction_map.insert(1, Self::cla);
+        instruction_map.insert(2, Self::add);
+        instruction_map.insert(3, Self::tac);
+        instruction_map.insert(4, Self::sft);
+        instruction_map.insert(5, Self::out);
+        instruction_map.insert(6, Self::sto);
+        instruction_map.insert(7, Self::sub);
+        instruction_map.insert(8, Self::jmp);
+        instruction_map.insert(9, Self::hrs);
 
         let mut memory: [i32; 100] = [0; 100];
         memory[0] = 1;
@@ -64,7 +64,7 @@ impl Assembler {
     fn cla(&mut self, address: usize) {
         let value: i32 = self.memory[address];
         self.accumulator = value;
-    
+
         // Check accumulator sign
         self.flag = value >= 0;
     }
@@ -81,21 +81,25 @@ impl Assembler {
     /// Performs a sign test on the contents of the accumulator.
     /// if minus, jump to a specified memory cell.
     fn tac(&mut self, address: usize) {
-        if self.flag {
+        if !(self.flag) {
             self.jmp(address);
         }
     }
 
     /// Shifts the accumulator x places left, then y places right, where x is the upper address digit and y is the lower.
     fn sft(&mut self, address: usize) {
-        let upper_digit = address / 10;
-        let lower_digit = address % 10;
-    
-        // Shift left by x places
-        self.accumulator <<= upper_digit;
-    
-        // Scroll right by and places
-        self.accumulator >>= lower_digit;
+        let left_digit = address / 10;
+        let right_digit = address % 10;
+
+        for _ in 0..left_digit {
+            self.accumulator *= 10;
+        }
+
+        self.accumulator %= 10_000;
+
+        for _ in 0..right_digit {
+            self.accumulator /= 10;
+        }
     }
 
     /// Take a number from the specified memory cell and write it on the output card.
@@ -114,11 +118,11 @@ impl Assembler {
     fn sub(&mut self, address: usize) {
         let value: i32 = self.memory[address];
         self.accumulator -= value;
-        self.flag = value >= 0;
+        self.flag = self.accumulator >= 0;
     }
 
-    /// Jump to a specified memory cell. 
-    /// The current cell number is written in cell 99. 
+    /// Jump to a specified memory cell.
+    /// The current cell number is written in cell 99.
     /// This allows for one level of subroutines by having the return be the instruction at cell 99 (which had '8' hardcoded as the first digit.
     fn jmp(&mut self, address: usize) {
         self.memory[99] = format!("8{:02}", self.target).parse().unwrap();
@@ -133,6 +137,14 @@ impl Assembler {
 
     pub fn check_run(&self) -> bool {
         self.run
+    }
+
+    pub fn set_target(&mut self, target: u32) {
+        self.target = target
+    }
+
+    pub fn get_output_card(&self) -> &Vec<i32> {
+        &self.output_deck
     }
 
     pub fn reset(&mut self) {
@@ -158,8 +170,7 @@ impl Assembler {
     pub fn load_program(&mut self, program: HashMap<u32, i32>) {
         for (address, instruction) in program {
             self.memory[address as usize] = instruction;
-            // println!("Address {address}; Instruction {instruction};")
-        } 
+        }
     }
 
     pub fn next_step(&mut self) {
@@ -169,13 +180,60 @@ impl Assembler {
 
         let opcode: u32 = (instruction / 100) as u32;
         let address: u32 = (instruction % 100) as u32;
-        
+
+        self.target += 1;
+
         if let Some(instruction_fn) = self.instruction_map.get(&opcode) {
             instruction_fn(self, address as usize);
+
+            println!("===================================");
+            println!("Opcode: {}             Address: {}", opcode, address);
+            println!("Input card: {:?}", self.input_deck);
+            println!("Output card: {:?}", self.output_deck);
+            println!("Accumulator: {}", self.accumulator);
+            println!("===================================");
+
             self.step += 1;
         } else {
             panic!("Opcode undefined: {}", opcode);
         }
     }
+}
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_assembler_hello_world() {
+        // Create a new Assembler instance
+        let mut assembler: Assembler = Assembler::new();
+
+        // Load a `hello world` program
+        let code: HashMap<u32, i32> = HashMap::from([
+            (22, 100),
+            (23, 410),
+            (24, 644),
+            (25, 144),
+            (26, 544),
+            (27, 700),
+            (28, 330),
+            (29, 824),
+            (30, 900),
+        ]);
+        assembler.load_program(code);
+
+        // Set target in program init
+        assembler.set_target(22);
+
+        // Ejecute the program
+        while assembler.check_run() {
+            assembler.next_step();
+        }
+
+        let result: &Vec<i32> = assembler.get_output_card();
+        let expected_result: &Vec<i32> = &Vec::from([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
+
+        assert_eq!(result, expected_result)
+    }
 }
