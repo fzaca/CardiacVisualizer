@@ -9,3 +9,6 @@ version = "0.1.0"
 [[package]]
 name = "cardiac-gui"
 version = "0.1.0"
+dependencies = [
+ "cardiac-core",
+]
