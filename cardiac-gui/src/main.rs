@@ -5,7 +5,7 @@ fn main() {
     // Create a new Assembler instance
     let mut assembler: Assembler = Assembler::new();
 
-    // Load a `hello world` program
+    // Load a `sum two nums` program
     let code: HashMap<u32, i32> = HashMap::from([
         (22, 100),
         (23, 410),

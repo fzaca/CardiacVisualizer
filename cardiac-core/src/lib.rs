@@ -1,3 +1,5 @@
+mod test;
+
 use std::collections::HashMap;
 
 /// Emulator of the **CARDIAC** cardboard computer.  
@@ -147,6 +149,14 @@ impl Assembler {
         &self.output_deck
     }
 
+    pub fn get_input_card(&self) -> &Vec<i32> {
+        &self.input_deck
+    }
+
+    pub fn add_input(&mut self, value: i32) {
+        self.input_deck.insert(0, value)
+    }
+
     pub fn reset(&mut self) {
         self.target = 0;
         self.step = 0;
@@ -197,43 +207,5 @@ impl Assembler {
         } else {
             panic!("Opcode undefined: {}", opcode);
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_assembler_hello_world() {
-        // Create a new Assembler instance
-        let mut assembler: Assembler = Assembler::new();
-
-        // Load a `hello world` program
-        let code: HashMap<u32, i32> = HashMap::from([
-            (22, 100),
-            (23, 410),
-            (24, 644),
-            (25, 144),
-            (26, 544),
-            (27, 700),
-            (28, 330),
-            (29, 824),
-            (30, 900),
-        ]);
-        assembler.load_program(code);
-
-        // Set target in program init
-        assembler.set_target(22);
-
-        // Ejecute the program
-        while assembler.check_run() {
-            assembler.next_step();
-        }
-
-        let result: &Vec<i32> = assembler.get_output_card();
-        let expected_result: &Vec<i32> = &Vec::from([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
-
-        assert_eq!(result, expected_result)
     }
 }
