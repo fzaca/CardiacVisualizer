@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 cardiac-core = { path = "../cardiac-core" }
+eframe = "0.14.0"

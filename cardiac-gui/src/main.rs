@@ -1,29 +1,22 @@
-use cardiac_core::Assembler;
-use std::collections::HashMap;
+use eframe::{egui::CentralPanel, epi::App, run_native, NativeOptions};
+
+struct Cardiac;
+
+impl App for Cardiac {
+    fn update(&mut self, ctx: &eframe::egui::CtxRef, frame: &mut eframe::epi::Frame<'_>) {
+        CentralPanel::default().show(ctx, |ui| {
+            ui.label("Hello world");
+        });
+    }
+
+    fn name(&self) -> &str {
+        "Cardiac"
+    }
+}
 
 fn main() {
-    // Create a new Assembler instance
-    let mut assembler: Assembler = Assembler::new();
+    let app = Cardiac;
+    let win_option = NativeOptions::default();
 
-    // Load a `sum two nums` program
-    let code: HashMap<u32, i32> = HashMap::from([
-        (22, 100),
-        (23, 410),
-        (24, 644),
-        (25, 144),
-        (26, 544),
-        (27, 700),
-        (28, 330),
-        (29, 824),
-        (30, 900),
-    ]);
-    assembler.load_program(code);
-
-    // Set target in program init
-    assembler.set_target(22);
-
-    // Ejecute the program
-    while assembler.check_run() {
-        assembler.next_step();
-    }
+    run_native(Box::new(app), win_option)
 }
