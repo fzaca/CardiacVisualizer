@@ -46,12 +46,13 @@ impl Assembler {
             input_deck: Vec::new(),
             output_deck: Vec::new(),
             instruction_map: instruction_map,
-            run: true,
+            run: false,
         }
     }
 
     /// Take a number from the input card ("INPut") and place it in the specified memory cell.
     fn inp(&mut self, address: usize) {
+        if address == 0 { return; }
         if let Some(value) = self.input_deck.pop() {
             if !(-999 <= value && value <= 999) {
                 panic!("Value in input card out of range: {}", value);
@@ -127,7 +128,9 @@ impl Assembler {
     /// The current cell number is written in cell 99.
     /// This allows for one level of subroutines by having the return be the instruction at cell 99 (which had '8' hardcoded as the first digit.
     fn jmp(&mut self, address: usize) {
-        self.memory[99] = format!("8{:02}", self.target).parse().unwrap();
+        if self.target != 100 {
+            self.memory[99] = format!("8{:02}", self.target).parse().unwrap();
+        }
         self.target = address as u32;
     }
 
@@ -141,8 +144,28 @@ impl Assembler {
         self.run
     }
 
+    pub fn set_run(&mut self, value: bool) {
+        self.run = value 
+    }
+
     pub fn set_target(&mut self, target: u32) {
         self.target = target
+    }
+
+    pub fn get_target(&mut self) -> &mut u32 {
+        &mut self.target
+    }
+
+    pub fn get_step(&mut self) -> i32 {
+        self.step
+    }
+
+    pub fn get_accumulator(&mut self) -> i32 {
+        self.accumulator
+    }
+
+    pub fn get_flag(&mut self) -> bool {
+        self.flag
     }
 
     pub fn get_output_card(&self) -> &Vec<i32> {
@@ -164,7 +187,15 @@ impl Assembler {
         self.input_deck = Vec::new();
         self.output_deck = Vec::new();
         self.flag = true;
-        self.run = true;
+        self.run = false;
+    }
+
+    pub fn get_memory(&self) -> &[i32; 100] {
+        &self.memory
+    }
+
+    pub fn get_memory_cell(&mut self, index: usize) -> &mut i32 {
+        &mut self.memory[index]
     }
 
     pub fn clear_memory(&mut self) {
@@ -184,8 +215,6 @@ impl Assembler {
     }
 
     pub fn next_step(&mut self) {
-        self.run = true;
-
         let instruction: i32 = self.memory[self.target as usize];
 
         let opcode: u32 = (instruction / 100) as u32;
