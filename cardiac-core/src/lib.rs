@@ -1,3 +1,5 @@
+mod test;
+
 use std::collections::HashMap;
 
 /// Emulator of the **CARDIAC** cardboard computer.  
@@ -44,12 +46,13 @@ impl Assembler {
             input_deck: Vec::new(),
             output_deck: Vec::new(),
             instruction_map: instruction_map,
-            run: true,
+            run: false,
         }
     }
 
     /// Take a number from the input card ("INPut") and place it in the specified memory cell.
     fn inp(&mut self, address: usize) {
+        if address == 0 { return; }
         if let Some(value) = self.input_deck.pop() {
             if !(-999 <= value && value <= 999) {
                 panic!("Value in input card out of range: {}", value);
@@ -125,7 +128,9 @@ impl Assembler {
     /// The current cell number is written in cell 99.
     /// This allows for one level of subroutines by having the return be the instruction at cell 99 (which had '8' hardcoded as the first digit.
     fn jmp(&mut self, address: usize) {
-        self.memory[99] = format!("8{:02}", self.target).parse().unwrap();
+        if self.target != 100 {
+            self.memory[99] = format!("8{:02}", self.target).parse().unwrap();
+        }
         self.target = address as u32;
     }
 
@@ -139,12 +144,40 @@ impl Assembler {
         self.run
     }
 
+    pub fn set_run(&mut self, value: bool) {
+        self.run = value 
+    }
+
     pub fn set_target(&mut self, target: u32) {
         self.target = target
     }
 
+    pub fn get_target(&mut self) -> &mut u32 {
+        &mut self.target
+    }
+
+    pub fn get_step(&mut self) -> i32 {
+        self.step
+    }
+
+    pub fn get_accumulator(&mut self) -> i32 {
+        self.accumulator
+    }
+
+    pub fn get_flag(&mut self) -> bool {
+        self.flag
+    }
+
     pub fn get_output_card(&self) -> &Vec<i32> {
         &self.output_deck
+    }
+
+    pub fn get_input_card(&self) -> &Vec<i32> {
+        &self.input_deck
+    }
+
+    pub fn add_input(&mut self, value: i32) {
+        self.input_deck.insert(0, value)
     }
 
     pub fn reset(&mut self) {
@@ -154,7 +187,15 @@ impl Assembler {
         self.input_deck = Vec::new();
         self.output_deck = Vec::new();
         self.flag = true;
-        self.run = true;
+        self.run = false;
+    }
+
+    pub fn get_memory(&self) -> &[i32; 100] {
+        &self.memory
+    }
+
+    pub fn get_memory_cell(&mut self, index: usize) -> &mut i32 {
+        &mut self.memory[index]
     }
 
     pub fn clear_memory(&mut self) {
@@ -174,8 +215,6 @@ impl Assembler {
     }
 
     pub fn next_step(&mut self) {
-        self.run = true;
-
         let instruction: i32 = self.memory[self.target as usize];
 
         let opcode: u32 = (instruction / 100) as u32;
@@ -197,43 +236,5 @@ impl Assembler {
         } else {
             panic!("Opcode undefined: {}", opcode);
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_assembler_hello_world() {
-        // Create a new Assembler instance
-        let mut assembler: Assembler = Assembler::new();
-
-        // Load a `hello world` program
-        let code: HashMap<u32, i32> = HashMap::from([
-            (22, 100),
-            (23, 410),
-            (24, 644),
-            (25, 144),
-            (26, 544),
-            (27, 700),
-            (28, 330),
-            (29, 824),
-            (30, 900),
-        ]);
-        assembler.load_program(code);
-
-        // Set target in program init
-        assembler.set_target(22);
-
-        // Ejecute the program
-        while assembler.check_run() {
-            assembler.next_step();
-        }
-
-        let result: &Vec<i32> = assembler.get_output_card();
-        let expected_result: &Vec<i32> = &Vec::from([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
-
-        assert_eq!(result, expected_result)
     }
 }
