@@ -225,12 +225,12 @@ impl Assembler {
         if let Some(instruction_fn) = self.instruction_map.get(&opcode) {
             instruction_fn(self, address as usize);
 
-            println!("===================================");
-            println!("Opcode: {}             Address: {}", opcode, address);
-            println!("Input card: {:?}", self.input_deck);
-            println!("Output card: {:?}", self.output_deck);
-            println!("Accumulator: {}", self.accumulator);
-            println!("===================================");
+            // println!("===================================");
+            // println!("Opcode: {}             Address: {}", opcode, address);
+            // println!("Input card: {:?}", self.input_deck);
+            // println!("Output card: {:?}", self.output_deck);
+            // println!("Accumulator: {}", self.accumulator);
+            // println!("===================================");
 
             self.step += 1;
         } else {

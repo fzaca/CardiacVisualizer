@@ -19,18 +19,39 @@ impl Cardiac {
     }
 
     fn render_header(&self, ui: &mut eframe::egui::Ui) {
-        ui.label("Hello world");
+        ui.horizontal(|ui| {
+            ui.button("tools");
+            ui.collapsing("Instructions", |ui| {
+                ui.label("Code  Mnemonic  Instruction");
+                ui.label("0          INP                 Input");
+                    // .on_hover_ui(|ui| {ui.label("help");});
+                ui.label("1          CLA                Clear and add");
+                ui.label("2          ADD               Add");
+                ui.label("3          TAC                Test accumulator contents");
+                ui.label("4          SFT                 Shift");
+                ui.label("5          OUT               Output");
+                ui.label("6          STO                Store");
+                ui.label("7          SUB                Subtract");
+                ui.label("8          JMP               Jump");
+                ui.label("9          HRS                Halt and reset");
+                // ui.hyperlink_to(
+                //     "               (wiki)",
+                //     "wikipedia.org/wiki/CARDboard_Illustrative_Aid_to_Computation",
+                // );
+                // ui.add(crate::egui_github_link_file!());
+            });
+        });
     }
 
     fn render_memory(&mut self, ui: &mut eframe::egui::Ui) {
         ui.horizontal(|ui| {
-            for i in 0..10 {
-                ui.vertical(|ui| {
+            ui.columns(10, |cols| {
+                for i in 0..10 {
                     for j in 0..10 {
                         let idx = i * 10 + j;
                         let cell = self.assembler.get_memory_cell(idx);
                         let drag_value = eframe::egui::DragValue::new(cell);
-                        ui.add(drag_value);
+                        cols[i].add(drag_value);
 
                         let label = Label::new(format!("{}", idx)).text_color(
                             if *self.assembler.get_target() == idx as u32 {
@@ -39,10 +60,10 @@ impl Cardiac {
                                 Color32::LIGHT_GRAY
                             },
                         );
-                        ui.label(label);
+                        cols[i].label(label);
                     }
-                });
-            }
+                };
+            });
         });
     }
 
