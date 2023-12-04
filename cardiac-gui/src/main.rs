@@ -1,44 +1,65 @@
 use cardiac_core::Assembler;
 use eframe::{
-    egui::{CentralPanel, Color32, Label, Vec2},
+    egui::{Button, CentralPanel, Color32, Context, Hyperlink, Label, Layout, Vec2, Visuals},
     epi::App,
     run_native, NativeOptions,
 };
 
+const WHITE: Color32 = Color32::from_rgb(255, 255, 255);
+const BLACK: Color32 = Color32::from_rgb(0, 0, 0);
+const CYAN: Color32 = Color32::from_rgb(0, 255, 255);
+const RED: Color32 = Color32::from_rgb(255, 0, 0);
+
+struct CardiacConfig {
+    dark_mode: bool,
+}
+
 struct Cardiac {
     assembler: Assembler,
     input_text: String,
+    config: CardiacConfig,
 }
 
 impl Cardiac {
     fn new() -> Self {
+        let config: CardiacConfig = CardiacConfig { dark_mode: true };
         Self {
             assembler: Assembler::new(),
             input_text: String::new(),
+            config: config,
         }
     }
 
-    fn render_header(&self, ui: &mut eframe::egui::Ui) {
+    fn render_header(&mut self, ui: &mut eframe::egui::Ui) {
         ui.horizontal(|ui| {
-            ui.button("tools");
-            ui.collapsing("Instructions", |ui| {
-                ui.label("Code  Mnemonic  Instruction");
-                ui.label("0          INP                 Input");
-                    // .on_hover_ui(|ui| {ui.label("help");});
-                ui.label("1          CLA                Clear and add");
-                ui.label("2          ADD               Add");
-                ui.label("3          TAC                Test accumulator contents");
-                ui.label("4          SFT                 Shift");
-                ui.label("5          OUT               Output");
-                ui.label("6          STO                Store");
-                ui.label("7          SUB                Subtract");
-                ui.label("8          JMP               Jump");
-                ui.label("9          HRS                Halt and reset");
-                // ui.hyperlink_to(
-                //     "               (wiki)",
-                //     "wikipedia.org/wiki/CARDboard_Illustrative_Aid_to_Computation",
-                // );
-                // ui.add(crate::egui_github_link_file!());
+            ui.with_layout(Layout::left_to_right(), |ui| {
+                ui.button("tools");
+                ui.collapsing("Instructions", |ui| {
+                    ui.label("Code  Mnemonic  Instruction");
+                    ui.label("0          INP                 Input");
+                    ui.label("1          CLA                Clear and add");
+                    ui.label("2          ADD               Add");
+                    ui.label("3          TAC                Test accumulator contents");
+                    ui.label("4          SFT                 Shift");
+                    ui.label("5          OUT               Output");
+                    ui.label("6          STO                Store");
+                    ui.label("7          SUB                Subtract");
+                    ui.label("8          JMP               Jump");
+                    ui.label("9          HRS                Halt and reset");
+                });
+            });
+
+            ui.with_layout(Layout::right_to_left(), |ui| {
+                let theme_btn = ui.add(Button::new({
+                    if self.config.dark_mode {
+                        "🌞"
+                    } else {
+                        "🌙"
+                    }
+                }));
+                if theme_btn.clicked() {
+                    self.config.dark_mode = !self.config.dark_mode;
+                }
             });
         });
     }
@@ -55,14 +76,18 @@ impl Cardiac {
 
                         let label = Label::new(format!("{}", idx)).text_color(
                             if *self.assembler.get_target() == idx as u32 {
-                                Color32::LIGHT_BLUE
+                                if self.config.dark_mode {
+                                    CYAN
+                                } else {
+                                    RED
+                                }
                             } else {
                                 Color32::LIGHT_GRAY
                             },
                         );
                         cols[i].label(label);
                     }
-                };
+                }
             });
         });
     }
@@ -77,9 +102,9 @@ impl Cardiac {
             ui.label("target");
             ui.add(drag_value);
         });
-        // buttons
-        ui.horizontal(|ui| {
-            if ui.button("next step").clicked() {
+        // Buttons
+        ui.horizontal_wrapped(|ui| {
+            if ui.button("step").clicked() {
                 self.assembler.next_step();
             } else if ui.button("run").clicked() {
                 self.assembler.set_run(!self.assembler.check_run());
@@ -88,6 +113,12 @@ impl Cardiac {
             } else if ui.button("clear memory").clicked() {
                 self.assembler.clear_memory();
             }
+        });
+    }
+
+    fn render_body(&mut self, ui: &mut eframe::egui::Ui) {
+        ui.columns(4, |cols| {
+            self.render_controls(&mut cols[0]);
         });
     }
 
@@ -115,6 +146,20 @@ impl Cardiac {
         ui.label(format!("output: {:?}", output_card));
     }
 
+    fn render_footer(&self, ui: &mut eframe::egui::Ui) {
+        ui.vertical_centered(|ui| {
+            ui.add_space(10.);
+            ui.add(Hyperlink::from_label_and_url(
+                "Made with egui",
+                "https://github.com/emilk/egui",
+            ));
+            ui.add(Hyperlink::from_label_and_url(
+                "Xukay101/CardiacVisualizer",
+                "https://github.com/Xukay101/CardiacVisualizer",
+            ));
+            ui.add_space(10.);
+        });
+    }
 }
 
 impl App for Cardiac {
@@ -124,6 +169,12 @@ impl App for Cardiac {
             self.assembler.next_step()
         }
 
+        if self.config.dark_mode {
+            ctx.set_visuals(Visuals::dark());
+        } else {
+            ctx.set_visuals(Visuals::light());
+        }
+
         // Render interface
         CentralPanel::default().show(ctx, |ui| {
             // Doc in https://www.egui.rs/
@@ -131,11 +182,9 @@ impl App for Cardiac {
             ui.separator();
             self.render_memory(ui);
             ui.separator();
-            self.render_controls(ui);
+            self.render_body(ui);
             ui.separator();
-            self.render_input(ui);
-            ui.separator();
-            self.render_output(ui);
+            self.render_footer(ui)
         });
     }
 
@@ -148,6 +197,7 @@ fn main() {
     let app = Cardiac::new();
     let mut win_option = NativeOptions::default();
     win_option.initial_window_size = Some(Vec2::new(540., 760.));
+    win_option.resizable = false;
 
     run_native(Box::new(app), win_option)
 }
