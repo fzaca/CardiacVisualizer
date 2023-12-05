@@ -176,6 +176,10 @@ impl Assembler {
         &self.input_deck
     }
 
+    pub fn clear_input_card(&mut self) {
+        self.input_deck.clear();
+    }
+
     pub fn add_input(&mut self, value: i32) {
         self.input_deck.insert(0, value)
     }

@@ -1,12 +1,10 @@
 use cardiac_core::Assembler;
 use eframe::{
-    egui::{Button, CentralPanel, Color32, Context, Hyperlink, Label, Layout, Vec2, Visuals},
+    egui::{Button, CentralPanel, Color32, Hyperlink, Label, Layout, Vec2, Visuals, ScrollArea},
     epi::App,
     run_native, NativeOptions,
 };
 
-const WHITE: Color32 = Color32::from_rgb(255, 255, 255);
-const BLACK: Color32 = Color32::from_rgb(0, 0, 0);
 const CYAN: Color32 = Color32::from_rgb(0, 255, 255);
 const RED: Color32 = Color32::from_rgb(255, 0, 0);
 
@@ -93,57 +91,90 @@ impl Cardiac {
     }
 
     fn render_controls(&mut self, ui: &mut eframe::egui::Ui) {
-        ui.label(format!("flag: {}", self.assembler.get_flag()));
-        ui.label(format!("accumulator: {}", self.assembler.get_accumulator()));
-        ui.label(format!("step: {}", self.assembler.get_step()));
-        ui.horizontal(|ui| {
-            let target = self.assembler.get_target();
-            let drag_value = eframe::egui::DragValue::new(target);
-            ui.label("target");
-            ui.add(drag_value);
+        ui.monospace("Controls");
+        ui.group(|ui| {
+            ui.label(format!("flag: {}", self.assembler.get_flag()));
+            ui.label(format!("accumulator: {}", self.assembler.get_accumulator()));
+            ui.label(format!("step: {}", self.assembler.get_step()));
+            ui.horizontal(|ui| {
+                let target = self.assembler.get_target();
+                let drag_value = eframe::egui::DragValue::new(target);
+                ui.label("target");
+                ui.add(drag_value);
+            });
+            // Buttons
+            ui.horizontal_wrapped(|ui| {
+                if ui.button("step").clicked() {
+                    self.assembler.next_step();
+                } else if ui.button("run").clicked() {
+                    self.assembler.set_run(!self.assembler.check_run());
+                } else if ui.button("reset").clicked() {
+                    self.assembler.reset();
+                } else if ui.button("clear memory").clicked() {
+                    self.assembler.clear_memory();
+                }
+            });
         });
-        // Buttons
-        ui.horizontal_wrapped(|ui| {
-            if ui.button("step").clicked() {
-                self.assembler.next_step();
-            } else if ui.button("run").clicked() {
-                self.assembler.set_run(!self.assembler.check_run());
-            } else if ui.button("reset").clicked() {
-                self.assembler.reset();
-            } else if ui.button("clear memory").clicked() {
-                self.assembler.clear_memory();
-            }
+    }
+
+    fn render_input(&mut self, ui: &mut eframe::egui::Ui) {
+        ui.monospace("Input Card");
+        ui.group(|ui| {
+            let input_card = self.assembler.get_input_card();
+            ScrollArea::from_max_height(90.).id_source(1).show(ui, |ui| {
+                ui.set_min_height(90.);
+                for value in input_card {
+                    ui.label(format!("{}", value));
+                }
+            });
+            ui.horizontal_wrapped(|ui| {
+                ui.text_edit_singleline(&mut self.input_text);
+                if ui.button("add").clicked() {
+                    let value = match self.input_text.parse::<i32>() {
+                        Ok(n) => n,
+                        Err(_) => 0,
+                    };
+
+                    if value != 0 && (value >= -999 && value <= 999) {
+                        self.assembler.add_input(value);
+                    }
+                    self.input_text.clear();
+                } else if ui.button("clear").clicked() {
+                    self.assembler.clear_input_card();
+                }
+            });
+        });
+    }
+
+    fn render_logs(&mut self, ui: &mut eframe::egui::Ui) {
+        ui.monospace("Logs");
+        ui.group(|ui| {
+            ui.set_min_height(132.);
+            ui.label("__________");
+        });
+    }
+
+    fn render_output(&mut self, ui: &mut eframe::egui::Ui) {
+        ui.monospace("Output Card");
+        ui.group(|ui| {
+            let output_card = self.assembler.get_output_card();
+            ScrollArea::from_max_height(132.).show(ui, |ui| {
+                ui.set_min_height(132.);
+                for value in output_card{
+                    ui.label(format!("{}", value));
+                }
+            });
         });
     }
 
     fn render_body(&mut self, ui: &mut eframe::egui::Ui) {
         ui.columns(4, |cols| {
             self.render_controls(&mut cols[0]);
+            self.render_logs(&mut cols[1]);
+            self.render_input(&mut cols[2]);
+            self.render_output(&mut cols[3]);
+
         });
-    }
-
-    fn render_input(&mut self, ui: &mut eframe::egui::Ui) {
-        let input_card = self.assembler.get_input_card();
-        ui.label(format!("input: {:?}", input_card));
-        ui.horizontal(|ui| {
-            ui.text_edit_singleline(&mut self.input_text);
-            if ui.button("add").clicked() {
-                let value = match self.input_text.parse::<i32>() {
-                    Ok(n) => n,
-                    Err(_) => 0,
-                };
-
-                if value != 0 && (value >= -999 && value <= 999) {
-                    self.assembler.add_input(value);
-                }
-                self.input_text.clear();
-            }
-        });
-    }
-
-    fn render_output(&mut self, ui: &mut eframe::egui::Ui) {
-        let output_card = self.assembler.get_output_card();
-        ui.label(format!("output: {:?}", output_card));
     }
 
     fn render_footer(&self, ui: &mut eframe::egui::Ui) {
@@ -182,7 +213,9 @@ impl App for Cardiac {
             ui.separator();
             self.render_memory(ui);
             ui.separator();
+            ui.add_space(10.);
             self.render_body(ui);
+            ui.add_space(10.);
             ui.separator();
             self.render_footer(ui)
         });
@@ -196,7 +229,7 @@ impl App for Cardiac {
 fn main() {
     let app = Cardiac::new();
     let mut win_option = NativeOptions::default();
-    win_option.initial_window_size = Some(Vec2::new(540., 760.));
+    win_option.initial_window_size = Some(Vec2::new(540., 670.));
     win_option.resizable = false;
 
     run_native(Box::new(app), win_option)
