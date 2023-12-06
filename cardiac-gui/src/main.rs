@@ -31,7 +31,7 @@ impl Cardiac {
     fn render_header(&mut self, ui: &mut eframe::egui::Ui) {
         ui.horizontal(|ui| {
             ui.with_layout(Layout::left_to_right(), |ui| {
-                ui.button("tools");
+                let _ = ui.button("tools");
                 ui.collapsing("Instructions", |ui| {
                     ui.label("Code  Mnemonic  Instruction");
                     ui.label("0          INP                 Input");
